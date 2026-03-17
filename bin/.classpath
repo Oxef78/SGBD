@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry excluding="Code Introductif/|Table Disque et exemples/" kind="src" path=""/>
+	<classpathentry kind="src" path="Code Introductif"/>
+	<classpathentry kind="src" path="Table Disque et exemples"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

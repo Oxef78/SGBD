@@ -1,13 +1,19 @@
 
 public class ExempleTableDisque {
 
+	private static FullScanTableDisque scanOn(String path) {
+		FullScanTableDisque scan = new FullScanTableDisque();
+		scan.setFilePath(path);
+		return scan;
+	}
+
 	public static void main(String[] args) {
-		FullScanTableDisque T4 = new FullScanTableDisque();
-		T4.setFilePath("/home/beng/tmp/table1"); // Mettez ici le bon chemin vers votre fichier
-		FullScanTableDisque T5 = new FullScanTableDisque();
-		T5.setFilePath("/home/beng/tmp/table2"); // idem
+		String table1Path = "Table Disque et exemples/table1";
+		String table2Path = "Table Disque et exemples/table2";
 		Tuple t = null;
-	
+
+		FullScanTableDisque T4 = scanOn(table1Path);
+		FullScanTableDisque T5 = scanOn(table2Path);
 
 		T4.open();
 		T5.open();
@@ -28,11 +34,22 @@ public class ExempleTableDisque {
 			System.out.println(t);
 		f.close();
 		
-		DBI join = new DBI(T4, T5, 0, 0);
+		DBI join = new DBI(scanOn(table1Path), scanOn(table2Path), 0, 0);
 		join.open();
 		System.out.println("JOIN ****");
 		while((t= join.next())!=null)
 			System.out.println(t);
+		join.close();
+
+		HashJoinDisque hashJoin = new HashJoinDisque(scanOn(table1Path), scanOn(table2Path), 0, 0);
+		hashJoin.open();
+		System.out.println("HASH JOIN ****");
+		while((t = hashJoin.next())!=null)
+			System.out.println(t);
+		hashJoin.close();
+
+		System.out.println("HashJoin stats: build=" + hashJoin.getBuildTuples() +
+				" probe=" + hashJoin.getProbeTuples() + " buckets=" + hashJoin.getBucketCount());
 	
 	}
 

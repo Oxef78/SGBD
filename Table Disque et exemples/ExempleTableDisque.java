@@ -27,7 +27,7 @@ public class ExempleTableDisque {
 		T4.close();
 		T5.close();
 		
-		FiltreEgalite f = new FiltreEgalite(T4, 2, 1);
+		Restrict f = new Restrict(scanOn(table1Path), 2, 1, Restrict.EGAL);
 		f.open();
 		System.out.println("Filtre sur T4 ****");
 		while((t = f.next())!=null)
@@ -41,7 +41,7 @@ public class ExempleTableDisque {
 			System.out.println(t);
 		join.close();
 
-		HashJoinDisque hashJoin = new HashJoinDisque(scanOn(table1Path), scanOn(table2Path), 0, 0);
+		HashJoin hashJoin = new HashJoin(scanOn(table1Path), scanOn(table2Path), 0, 0);
 		hashJoin.open();
 		System.out.println("HASH JOIN ****");
 		while((t = hashJoin.next())!=null)

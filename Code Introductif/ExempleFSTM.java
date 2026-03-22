@@ -14,24 +14,54 @@ public class ExempleFSTM {
 			System.out.println(t);
 		}
 		scanAffichage.close();
-
+	
+		//------------------------------------------------------------------
 		System.out.println("\n=== REQUETE : SUM(col0) WHERE col1 = 1 ===");
 
+		//
 		Operateur scan = new FullScanTableMemoire(tm);
+		
+		// Restrict : source, colonne, valeur, type
 		Operateur filtre = new Restrict(scan, 1, 1, Restrict.EGAL);
-		Operateur agg = new Aggregate(filtre, 0, Aggregate.SUM);
+
+		// Project : source, colonnes (on garde col0)
+		Operateur project = new Project(filtre, new int[]{0});
+
+		// Aggregate : source, type
+		Operateur agg = new Aggregate(project, Aggregate.SUM);
+		
 
 		agg.open();
 		Tuple res = agg.next();
 
 		if (res != null) {
-			System.out.println("Résultat = " + res);
+			System.out.println("Résultat(sum de col 0 lorsque col1 = 1) = " + res);
 		} else {
 			System.out.println("Aucun résultat");
 		}
 
 		agg.close();
 
+		//------------------------------------------------------------------
+		System.out.println("\n=== REQUETE VIA PARSEUR SQL ===");
+
+		String sql = "SELECT SUM(A0) FROM T1";
+		System.out.println("SQL = " + sql);
+
+		Operateur op = Parser.parse(sql, tm);
+
+		op.open();
+		Tuple resParse = op.next();
+
+		if (resParse != null) {
+			System.out.println("Résultat(parseur) = " + resParse);
+		} else {
+			System.out.println("Aucun résultat");
+		}
+
+		op.close();
+
+		//------------------------------------------------------------------
 		System.out.println("\n=== AUTRES TESTS ===");
 
 		// COUNT
@@ -48,8 +78,15 @@ public class ExempleFSTM {
 	}
 
 	private static void testAggregation(TableMemoire tm, int type, String label) {
+
+		// scan
 		Operateur scan = new FullScanTableMemoire(tm);
-		Operateur agg = new Aggregate(scan, 0, type);
+
+		// project (on travaille sur col0)
+		Operateur project = new Project(scan, new int[]{0});
+
+		// aggregate
+		Operateur agg = new Aggregate(project, type);
 
 		agg.open();
 		Tuple res = agg.next();

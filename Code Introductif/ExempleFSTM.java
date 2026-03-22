@@ -1,96 +1,103 @@
+import java.util.*;
+
 public class ExempleFSTM {
 
 	public static void main(String[] args) {
 
 		Tuple t;
 
-		// Table : 3 colonnes, 10 lignes, valeurs max 5
+		// Table RAM
 		TableMemoire tm = TableMemoire.randomize(3, 10, 5);
 
-		System.out.println("=== TABLE ===");
+		// Mapping des tables
+		Map<String, TableMemoire> tables = new HashMap<>();
+		tables.put("T1", tm); // RAM
+
+		System.out.println(" TABLE ");
 		Operateur scanAffichage = new FullScanTableMemoire(tm);
 		scanAffichage.open();
 		while ((t = scanAffichage.next()) != null) {
 			System.out.println(t);
 		}
 		scanAffichage.close();
-	
+
+		System.out.println("\n--- METRICS SCAN ---");
+		System.out.println(scanAffichage);
+
 		//------------------------------------------------------------------
-		System.out.println("\n=== REQUETE : SUM(col0) WHERE col1 = 1 ===");
+		System.out.println("\n 1. PIPELINE MANUEL (REFERENCE) ");
+		System.out.println("SUM(col0) WHERE col1 = 1");
 
-		//
 		Operateur scan = new FullScanTableMemoire(tm);
-		
-		// Restrict : source, colonne, valeur, type
 		Operateur filtre = new Restrict(scan, 1, 1, Restrict.EGAL);
-
-		// Project : source, colonnes (on garde col0)
 		Operateur project = new Project(filtre, new int[]{0});
-
-		// Aggregate : source, type
 		Operateur agg = new Aggregate(project, Aggregate.SUM);
-		
 
 		agg.open();
 		Tuple res = agg.next();
-
-		if (res != null) {
-			System.out.println("Résultat(sum de col 0 lorsque col1 = 1) = " + res);
-		} else {
-			System.out.println("Aucun résultat");
-		}
-
 		agg.close();
 
-		//------------------------------------------------------------------
-		System.out.println("\n=== REQUETE VIA PARSEUR SQL ===");
+		System.out.println("Résultat = " + res);
 
-		String sql = "SELECT SUM(A0) FROM T1";
+		System.out.println("\nPLAN (manuel) :");
+		PlanPrinter.print(agg);
+
+		//------------------------------------------------------------------
+		System.out.println("\n 2. MEME REQUETE VIA PARSEUR ");
+
+		String sql = "SELECT SUM(A0) FROM T1 WHERE A1 = 1";
 		System.out.println("SQL = " + sql);
 
-		Operateur op = Parser.parse(sql, tm);
+		Operateur op = Parser.parse(sql, tables);
 
 		op.open();
 		Tuple resParse = op.next();
-
-		if (resParse != null) {
-			System.out.println("Résultat(parseur) = " + resParse);
-		} else {
-			System.out.println("Aucun résultat");
-		}
-
 		op.close();
 
+		System.out.println("Résultat = " + resParse);
+
+		System.out.println("\nPLAN (parseur) :");
+		PlanPrinter.print(op);
+
 		//------------------------------------------------------------------
-		System.out.println("\n=== AUTRES TESTS ===");
+		System.out.println("\n=== 5. CHOIX DU JOIN (DBI vs HashJoin) ===");
 
-		// COUNT
-		testAggregation(tm, Aggregate.COUNT, "COUNT");
+		String sqlJoin = "SELECT A0 FROM T1, table1 WHERE T1.A0 = table1.A0";
 
-		// MIN
-		testAggregation(tm, Aggregate.MIN, "MIN");
+		// CAS 1 : PETITE TABLE → DBI
+		System.out.println("\n--- CAS 1 : PETITE TABLE (DBI attendu) ---");
 
-		// MAX
-		testAggregation(tm, Aggregate.MAX, "MAX");
+		TableMemoire small = TableMemoire.randomize(3, 10, 5);
+		Map<String, TableMemoire> tablesSmall = new HashMap<>();
+		tablesSmall.put("T1", small);
 
-		// AVG
-		testAggregation(tm, Aggregate.AVG, "AVG");
-	}
+		Operateur opSmall = Parser.parse(sqlJoin, tablesSmall);
 
-	private static void testAggregation(TableMemoire tm, int type, String label) {
+		opSmall.open();
+		while ((t = opSmall.next()) != null) {
+			System.out.println("RESULT = " + t);
+		}
+		opSmall.close();
 
-		// scan
-		Operateur scan = new FullScanTableMemoire(tm);
+		System.out.println("\nPLAN (petite table) :");
+		PlanPrinter.print(opSmall);
 
-		// project (on travaille sur col0)
-		Operateur project = new Project(scan, new int[]{0});
+		// CAS 2 : GRANDE TABLE → HashJoin
+		System.out.println("\n--- CAS 2 : GRANDE TABLE (HashJoin attendu) ---");
 
-		// aggregate
-		Operateur agg = new Aggregate(project, type);
+		TableMemoire big = TableMemoire.randomize(3, 10, 100);
+		Map<String, TableMemoire> tablesBig = new HashMap<>();
+		tablesBig.put("T1", big);
 
-		agg.open();
-		Tuple res = agg.next();
-		System.out.println(label + " = " + res);
-		agg.close();
+		Operateur opBig = Parser.parse(sqlJoin, tablesBig);
+
+		opBig.open();
+		while ((t = opBig.next()) != null) {
+			System.out.println("RESULT = " + t);
+		}
+		opBig.close();
+
+		System.out.println("\nPLAN (grande table) :");
+		PlanPrinter.print(opBig);
 	}
 }

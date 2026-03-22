@@ -55,5 +55,10 @@ public class Restrict extends Instrumentation implements Operateur {
 		this.dataSource.close();
 		this.stop();
 	}
+	
+	@Override
+	public Operateur[] getSources() {
+	    return new Operateur[]{dataSource};
+	}
 
 }

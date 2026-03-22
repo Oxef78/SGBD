@@ -42,5 +42,10 @@ public class Project extends Instrumentation implements Operateur{
 	public void close() {
 		this.in.close();
 	}
+	
+	@Override
+	public Operateur[] getSources() {
+	    return new Operateur[]{in};
+	}
 
 }

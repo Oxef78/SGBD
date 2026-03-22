@@ -9,10 +9,16 @@ public class Aggregate extends Instrumentation implements Operateur {
     private Operateur source;
     private int type;
 
-    private boolean done = false;
-    private Tuple resultat;
+    private boolean computed = false;
+    private boolean returned = false;
+
+    private int sum;
+    private int count;
+    private int min;
+    private int max;
 
     public Aggregate(Operateur src, int type) {
+        super("Aggregate" + Instrumentation.number++);
         this.source = src;
         this.type = type;
     }
@@ -20,87 +26,98 @@ public class Aggregate extends Instrumentation implements Operateur {
     @Override
     public void open() {
         this.start();
+
         source.open();
 
-        int sum = 0;
-        int count = 0;
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
+        this.sum = 0;
+        this.count = 0;
+        this.min = Integer.MAX_VALUE;
+        this.max = Integer.MIN_VALUE;
+
+        this.computed = false;
+        this.returned = false;
+
+        this.tuplesProduits = 0;
+        this.memoire = 0;
+
+        this.stop();
+    }
+
+    private void computeIfNeeded() {
+        if (computed) return;
 
         Tuple t;
 
-        switch (type) {
+        while ((t = source.next()) != null) {
+            int val = t.val[0];
 
-            case SUM:
-                while ((t = source.next()) != null) {
-                    sum += t.val[0];
-                }
-                break;
+            switch (type) {
+                case SUM:
+                    sum += val;
+                    break;
 
-            case COUNT:
-                while ((t = source.next()) != null) {
+                case COUNT:
                     count++;
-                }
-                break;
+                    break;
 
-            case MIN:
-                while ((t = source.next()) != null) {
-                    int val = t.val[0];
+                case MIN:
                     if (val < min) min = val;
-                }
-                break;
+                    break;
 
-            case MAX:
-                while ((t = source.next()) != null) {
-                    int val = t.val[0];
+                case MAX:
                     if (val > max) max = val;
-                }
-                break;
+                    break;
 
-            case AVG:
-                while ((t = source.next()) != null) {
-                    int val = t.val[0];
+                case AVG:
                     sum += val;
                     count++;
-                }
-                break;
+                    break;
+            }
         }
 
-        resultat = new Tuple(1);
-
-        switch (type) {
-            case SUM:
-                resultat.val[0] = sum;
-                break;
-            case COUNT:
-                resultat.val[0] = count;
-                break;
-            case MIN:
-                resultat.val[0] = (min == Integer.MAX_VALUE ? 0 : min);
-                break;
-            case MAX:
-                resultat.val[0] = (max == Integer.MIN_VALUE ? 0 : max);
-                break;
-            case AVG:
-                resultat.val[0] = (count == 0 ? 0 : sum / count);
-                break;
-        }
-
-        this.stop();
+        computed = true;
     }
 
     @Override
     public Tuple next() {
         this.start();
 
-        if (done) {
+        if (returned) {
             this.stop();
             return null;
         }
 
-        done = true;
+        computeIfNeeded();
+
+        Tuple resultat = new Tuple(1);
+
+        switch (type) {
+            case SUM:
+                resultat.val[0] = sum;
+                break;
+
+            case COUNT:
+                resultat.val[0] = count;
+                break;
+
+            case MIN:
+                resultat.val[0] = (min == Integer.MAX_VALUE ? 0 : min);
+                break;
+
+            case MAX:
+                resultat.val[0] = (max == Integer.MIN_VALUE ? 0 : max);
+                break;
+
+            case AVG:
+                resultat.val[0] = (count == 0 ? 0 : sum / count);
+                break;
+        }
+
+        returned = true;
+
         this.produit(resultat);
         this.stop();
+
         return resultat;
     }
 
@@ -109,5 +126,10 @@ public class Aggregate extends Instrumentation implements Operateur {
         this.start();
         source.close();
         this.stop();
+    }
+    
+    @Override
+    public Operateur[] getSources() {
+        return new Operateur[]{source};
     }
 }

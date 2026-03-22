@@ -75,4 +75,9 @@ public class DBI extends Instrumentation implements Operateur {
 		this.op1.close();
 		this.op2.close();
 	}
+	
+	@Override
+	public Operateur[] getSources() {
+	    return new Operateur[]{op1, op2};
+	}
 }

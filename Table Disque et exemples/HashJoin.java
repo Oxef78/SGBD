@@ -123,4 +123,9 @@ public class HashJoin extends Instrumentation implements Operateur {
 		}
 		return ret;
 	}
+	
+	@Override
+	public Operateur[] getSources() {
+	    return new Operateur[]{buildInput, probeInput};
+	}
 }

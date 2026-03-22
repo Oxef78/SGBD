@@ -16,7 +16,7 @@ public class PlanBuilder {
         Condition joinCond = null;
         List<Condition> filters = new ArrayList<>();
 
-        for (Condition c : q.conditions) {
+        for (Condition c : q.conditions) {  //distinguer les joins ex : T1.A0 = T2.A0 ; des filters ex : T1.A1 = 1 (traitement différents)
             if (c.isJoin()) {
                 joinCond = c;
             } else {
@@ -24,7 +24,7 @@ public class PlanBuilder {
             }
         }
 
-        // ---------------- APPLY FILTERS EARLY ----------------
+        // ---------------- APPLIQUER LE FILTRE AVANT LA JOINTURE (grosse opti, simple) ----------------
         for (Condition c : filters) {
             if (c.leftTable.equals(q.tables.get(0))) {
                 left = new Restrict(left, c.leftCol, c.rightValue, Restrict.EGAL);
@@ -36,7 +36,7 @@ public class PlanBuilder {
         // ---------------- JOIN ----------------
         Operateur current;
 
-        // CAS 1 : UNE SEULE TABLE
+        // CAS 1 : UNE SEULE TABLE (pipeline + simple)
         if (right == null) {
             current = left;
         }
@@ -93,7 +93,7 @@ public class PlanBuilder {
             return tablesMemoire.get(tableName).valeurs.size();
         }
 
-        // valeur par défaut disque (approximation)
+        // valeur par défaut disque (approximation pour ne pas aller lire toute la table)
         return 100;
     }
 }

@@ -29,11 +29,10 @@ public class Instrumentation {
 	}
 	
 	public void start() {
-		this.start = System.currentTimeMillis(); // voir aussi System.nanoTime();
-	}
+		this.start = System.nanoTime();}
 	
 	public void stop() {
-		this.stop = System.currentTimeMillis(); // voir aussi System.nanoTime();
+		this.stop = System.nanoTime(); // voir aussi System.nanoTime(); currentTimeMillis()
 		this.time+=(this.stop-this.start);
 		
 	}

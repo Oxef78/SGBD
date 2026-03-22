@@ -6,11 +6,9 @@ public class ExempleFSTM {
 
 		Tuple t;
 
-		// Table RAM
-		TableMemoire tm = TableMemoire.randomize(3, 10, 5);
+		TableMemoire tm = TableMemoire.randomize(3, 10, 5); //RAM
 
-		// Mapping des tables
-		Map<String, TableMemoire> tables = new HashMap<>();
+		Map<String, TableMemoire> tables = new HashMap<>(); 
 		tables.put("T1", tm); // RAM
 
 		System.out.println(" TABLE ");
@@ -21,16 +19,15 @@ public class ExempleFSTM {
 		}
 		scanAffichage.close();
 
-		System.out.println("\n--- METRICS SCAN ---");
 		System.out.println(scanAffichage);
+		
 
 		//------------------------------------------------------------------
-		System.out.println("\n 1. PIPELINE MANUEL (REFERENCE) ");
-		System.out.println("SUM(col0) WHERE col1 = 1");
-
+		System.out.println("\n 1. PIPELINE MANUEL "); System.out.println("SUM(col0) WHERE col1 = 1");
+		
 		Operateur scan = new FullScanTableMemoire(tm);
-		Operateur filtre = new Restrict(scan, 1, 1, Restrict.EGAL);
-		Operateur project = new Project(filtre, new int[]{0});
+		Operateur filtre = new Restrict(scan, 1, 1, Restrict.EGAL); //WHERE
+		Operateur project = new Project(filtre, new int[]{0}); //SELECT
 		Operateur agg = new Aggregate(project, Aggregate.SUM);
 
 		agg.open();
@@ -39,14 +36,12 @@ public class ExempleFSTM {
 
 		System.out.println("Résultat = " + res);
 
-		System.out.println("\nPLAN (manuel) :");
+		System.out.println("\n 1. PLAN :");
 		PlanPrinter.print(agg);
-
+		
+		
 		//------------------------------------------------------------------
-		System.out.println("\n 2. MEME REQUETE VIA PARSEUR ");
-
-		String sql = "SELECT SUM(A0) FROM T1 WHERE A1 = 1";
-		System.out.println("SQL = " + sql);
+		System.out.println("\n 2. MEME REQUETE mais VIA LE PARSEUR "); String sql = "SELECT SUM(A0) FROM T1 WHERE A1 = 1"; System.out.println("SQL = " + sql);
 
 		Operateur op = Parser.parse(sql, tables);
 
@@ -56,18 +51,16 @@ public class ExempleFSTM {
 
 		System.out.println("Résultat = " + resParse);
 
-		System.out.println("\nPLAN (parseur) :");
+		System.out.println("\n 2. PLAN (parseur) :");
 		PlanPrinter.print(op);
 
 		//------------------------------------------------------------------
-		System.out.println("\n=== 5. CHOIX DU JOIN (DBI vs HashJoin) ===");
+		System.out.println("\n=== 3. CHOIX DU JOIN (DBI vs HashJoin) ==="); String sqlJoin = "SELECT A0 FROM T1, table1 WHERE T1.A0 = table1.A0";
 
-		String sqlJoin = "SELECT A0 FROM T1, table1 WHERE T1.A0 = table1.A0";
-
-		// CAS 1 : PETITE TABLE → DBI
+		
 		System.out.println("\n--- CAS 1 : PETITE TABLE (DBI attendu) ---");
 
-		TableMemoire small = TableMemoire.randomize(3, 10, 5);
+		TableMemoire small = TableMemoire.randomize(3, 10, 5); //colonnes, valeur max des int, nbr de ligne
 		Map<String, TableMemoire> tablesSmall = new HashMap<>();
 		tablesSmall.put("T1", small);
 
@@ -79,7 +72,7 @@ public class ExempleFSTM {
 		}
 		opSmall.close();
 
-		System.out.println("\nPLAN (petite table) :");
+		System.out.println("\n 3.1 PLAN (petite table) :");
 		PlanPrinter.print(opSmall);
 
 		// CAS 2 : GRANDE TABLE → HashJoin
@@ -97,7 +90,7 @@ public class ExempleFSTM {
 		}
 		opBig.close();
 
-		System.out.println("\nPLAN (grande table) :");
+		System.out.println("\n 3.2 PLAN (grande table) :");
 		PlanPrinter.print(opBig);
 	}
 }

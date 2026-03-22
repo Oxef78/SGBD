@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HashJoinDisque extends Instrumentation implements Operateur {
+public class HashJoin extends Instrumentation implements Operateur {
 
 	private Operateur buildInput;
 	private Operateur probeInput;
@@ -20,8 +20,8 @@ public class HashJoinDisque extends Instrumentation implements Operateur {
 	private int probeTuples;
 	private int savedBucketCount;
 
-	public HashJoinDisque(Operateur buildInput, Operateur probeInput, int buildCol, int probeCol) {
-		super("HashJoinDisque" + Instrumentation.number++);
+	public HashJoin(Operateur buildInput, Operateur probeInput, int buildCol, int probeCol) {
+		super("HashJoin" + Instrumentation.number++);
 		this.buildInput = buildInput;
 		this.probeInput = probeInput;
 		this.buildCol = buildCol;

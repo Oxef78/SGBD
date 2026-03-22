@@ -42,6 +42,26 @@ public class ExempleFSTM {
 
 		agg.close();
 
+		//------------------------------------------------------------------
+		System.out.println("\n=== REQUETE VIA PARSEUR SQL ===");
+
+		String sql = "SELECT SUM(A0) FROM T1";
+		System.out.println("SQL = " + sql);
+
+		Operateur op = Parser.parse(sql, tm);
+
+		op.open();
+		Tuple resParse = op.next();
+
+		if (resParse != null) {
+			System.out.println("Résultat(parseur) = " + resParse);
+		} else {
+			System.out.println("Aucun résultat");
+		}
+
+		op.close();
+
+		//------------------------------------------------------------------
 		System.out.println("\n=== AUTRES TESTS ===");
 
 		// COUNT
